@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Pagament 20€</title>
+  <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+  <h1>Pagar 20€</h1>
+  <div id="card-element"></div>
+  <button id="pay">Pagar 20€</button>
+  <div id="message"></div>
+
+  <script>
+    // Reemplaça amb la teva clau publicable de test (pk_test_...)
+    const stripe = Stripe('REPLACE_WITH_PUBLISHABLE_KEY');
+
+    document.getElementById('pay').addEventListener('click', async () => {
+      const res = await fetch('/payment/intent', { method: 'POST' });
+      const data = await res.json();
+      if (data.error) { document.getElementById('message').innerText = data.error; return; }
+      const clientSecret = data.client_secret;
+
+      const elements = stripe.elements();
+      const cardElement = elements.create('card');
+      cardElement.mount('#card-element');
+
+      const {error, paymentIntent} = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: { card: cardElement }
+      });
+
+      if (error) {
+        document.getElementById('message').innerText = error.message;
+      } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+        document.getElementById('message').innerText = 'Pagament ok!';
+      }
+    });
+  </script>
+</body>
+</html>
